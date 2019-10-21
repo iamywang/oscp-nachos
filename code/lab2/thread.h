@@ -80,35 +80,15 @@ extern void ThreadPrint(_int arg);
 class Thread
 {
 private:
-  int priority; // 优先级属性，可以设定一个范围0~9
-public:
-  // 获得当前线程优先级
-  int getPriority()
-  {
-    return priority;
-  }
-
-  // 设置当前线程优先级
-  void setPriority(int p)
-  {
-    if (p > 9 || p < 0)
-    {
-      printf("Invalid. Please set PRIORITY between 0 and 9.\n"); // 抛出错误信息
-    }
-    else
-      priority = p;
-  }
-
-  // 初始化带有优先级的线程
-  Thread(char *debugName, int p);
-
-private:
   // NOTE: DO NOT CHANGE the order of these first two members.
   // THEY MUST be in this position for SWITCH to work.
   int *stackTop;                       // the current stack pointer
   _int machineState[MachineStateSize]; // all registers except for stackTop
 
 public:
+  // 初始化带有优先级的线程
+  Thread(char *debugName, int p);
+
   Thread(char *debugName); // initialize a Thread
   ~Thread();               // deallocate a Thread
                            // NOTE -- thread being deleted
@@ -128,6 +108,17 @@ public:
                         // overflowed its stack
   void setStatus(ThreadStatus st) { status = st; }
   char *getName() { return (name); }
+  // 获得当前线程优先级
+  int getPriority() { return priority; }
+
+  // 设置当前线程优先级
+  void setPriority(int p)
+  {
+    if (p > 9 || p < 0)
+      printf("Invalid. Please set PRIORITY between 0 and 9.\n"); // 抛出错误信息
+    else
+      priority = p;
+  }
   void Print() { printf("%s, ", name); }
 
 private:
@@ -138,6 +129,7 @@ private:
                        // (If NULL, don't deallocate stack)
   ThreadStatus status; // ready, running or blocked
   char *name;
+  int priority; // 优先级属性，可以设定一个范围0~9
 
   void StackAllocate(VoidFunctionPtr func, _int arg);
   // Allocate a stack for thread.

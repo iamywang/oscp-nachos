@@ -38,7 +38,7 @@ Thread::Thread(char *threadName)
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;
-    setPriority(0); // 设置优先级为0
+    priority = 9; // 设置默认优先级为9
 #ifdef USER_PROGRAM
     space = NULL;
 #endif
@@ -50,7 +50,7 @@ Thread::Thread(char *threadName, int p)
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;
-    setPriority(p);
+    priority = p;
 #ifdef USER_PROGRAM
     space = NULL;
 #endif

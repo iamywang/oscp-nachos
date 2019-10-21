@@ -56,7 +56,7 @@ void Scheduler::ReadyToRun(Thread *thread)
 
     thread->setStatus(READY);
     // readyList->Append((void *)thread);
-    readyList->SortedInsert((void *)thread, thread->getPriority);
+    readyList->SortedInsert((void *)thread, thread->getPriority());
 }
 
 //----------------------------------------------------------------------
@@ -70,9 +70,7 @@ void Scheduler::ReadyToRun(Thread *thread)
 Thread *
 Scheduler::FindNextToRun()
 {
-    // return (Thread *)readyList->Remove();
-    int p;
-    return (Thread *)readyList->SortedRemove(p);
+    return (Thread *)readyList->Remove();
 }
 
 //----------------------------------------------------------------------
