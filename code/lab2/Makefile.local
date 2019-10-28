@@ -26,7 +26,7 @@ CCFILES = main.cc\
 	timer.cc\
 	prodcons++.cc\
 	ring.cc
-INCPATH += -I- -I ../lab2 -I../threads -I../machine
+INCPATH += -I../threads -I../machine
 
 DEFINES += -DTHREADS
 
