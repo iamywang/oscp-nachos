@@ -109,7 +109,7 @@ public:
   void setStatus(ThreadStatus st) { status = st; }
   char *getName() { return (name); }
   // 获得当前线程优先级
-  int getPriority() { return priority; }
+  int getPriority() { return (priority); }
 
   // 设置当前线程优先级
   void setPriority(int p)

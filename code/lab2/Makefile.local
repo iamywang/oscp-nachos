@@ -23,10 +23,9 @@ CCFILES = main.cc\
 	interrupt.cc\
 	sysdep.cc\
 	stats.cc\
-	timer.cc\
-	prodcons++.cc\
-	ring.cc
-INCPATH += -I../threads -I../machine
+	timer.cc
+
+INCPATH += -I../lab2 -I../threads -I../machine
 
 DEFINES += -DTHREADS
 
