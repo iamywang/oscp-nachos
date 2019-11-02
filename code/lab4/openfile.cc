@@ -29,6 +29,7 @@ OpenFile::OpenFile(int sector)
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
+    headSector = sector; // 文件头部头部扇区
 }
 
 //----------------------------------------------------------------------
@@ -146,7 +147,8 @@ int OpenFile::WriteAt(char *from, int numBytes, int position)
     if ((numBytes <= 0) || (position >= fileLength))
         return 0; // check request
     if ((position + numBytes) > fileLength)
-        numBytes = fileLength - position;
+        hdr->extendFile(position + numBytes);
+    // numBytes = fileLength - position;
     DEBUG('f', "Writing %d bytes at %d, from file of length %d.\n",
           numBytes, position, fileLength);
 
