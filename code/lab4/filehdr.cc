@@ -146,43 +146,31 @@ void FileHeader::Print()
 }
 
 //----------------------------------------------------------------------
+// FileHeader::setLength
+// 改变文件大小
+//----------------------------------------------------------------------
+
+void FileHeader::setLength(int length)
+{
+    this->numBytes = length;
+}
+//----------------------------------------------------------------------
 // FileHeader::extendFile
 // 改变文件大小，判断是否需要扩展数据扇区
 //----------------------------------------------------------------------
 
-bool FileHeader::extendFile(int len)
+bool FileHeader::extendFile(BitMap *freeMap, int appendSize)
 {
-    if (len < numBytes)
-        return FALSE; // 不需要扩展扇区
-    if (len == numBytes)
-        return TRUE; // 不改变文件大小
-
-    int newNumSectors = divRoundUp(len, SectorSize); // 需要新分配的扇区大小
-    if (newNumSectors == numSectors)
+    int oriSectors = numSectors;                                  //记录原空间大小
+    numSectors = divRoundUp(appendSize, SectorSize) + oriSectors; //计算新扇区大小
+    printf("New SectorsNum is %d\n", numSectors);
+    if (freeMap->NumClear() < numSectors - oriSectors)
     {
-        numBytes = len;
-        return TRUE;
+        numSectors = oriSectors; //将空间大小复原
+        return FALSE;            // not enough space
     }
 
-    int diffSector = newNumSectors - numSectors; // 额外大小
-
-    OpenFile *bitmapfile = new OpenFile(0);
-    BitMap *freeMap;
-    freeMap = new BitMap(NumSectors);
-    freeMap->FetchFrom(bitmapfile);
-    printf("debug in fhdr extend where new Sector=%d \n", freeMap->NumClear());
-
-    if (newNumSectors > NumDirect || freeMap->NumClear() < diffSector)
-        return FALSE; // 磁盘没有那么多的空间
-
-    //分配新扇区，写入文件头
-    int i;
-    for (i = numSectors; i < newNumSectors; i++)
-    {
+    for (int i = oriSectors; i < numSectors; i++) //申请新的扇区
         dataSectors[i] = freeMap->Find();
-    }
-    numBytes = len;
-    numSectors = newNumSectors;
-
     return TRUE;
 }

@@ -148,7 +148,7 @@ void Append(char *from, char *to, int half)
 
     // Write the inode back to the disk, because we have changed it
     openFile->WriteBack();
-    //  printf("inodes have been written back\n");
+    printf("inodes have been written back\n");
 
     // Close the UNIX and the Nachos files
     delete openFile;
@@ -232,7 +232,7 @@ void NAppend(char *from, char *to)
 
     // Write the inode back to the disk, because we have changed it
     openFileTo->WriteBack();
-    // printf("inodes have been written back\n");
+    printf("inodes have been written back\n");
 
     // Close both Nachos files
     delete openFileTo;

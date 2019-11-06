@@ -57,7 +57,9 @@ public:
 
   void Print(); // Print the contents of the file.
 
-  bool extendFile(int len);
+  bool extendFile(BitMap *freeMap, int appendSize);
+
+  void setLength(int length);
 
 private:
   int numBytes;               // Number of bytes in the file

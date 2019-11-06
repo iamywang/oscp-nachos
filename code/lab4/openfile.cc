@@ -143,19 +143,31 @@ int OpenFile::WriteAt(char *from, int numBytes, int position)
     int i, firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
     char *buf;
+    //    printf("seekPosition is %d,fileLength is %d\n",seekPosition,fileLength);
+    if (numBytes < 0)
+        return 0;                   // check request
+    if (seekPosition >= fileLength) //如果文件指针已经超过了文件大小
+    {
+        numSectors = divRoundUp(fileLength, SectorSize); //计算当前需要的扇区
+        int numPos = seekPosition + numBytes;            //计算添加新字节之后的指针位置
+        if (numPos > numSectors * SectorSize)            //如果文件为空或者超过了已有扇区空间
+        {
+            AllocateSpace(numPos - numSectors * SectorSize); //申请新空间
+            fileLength += numBytes;                          //增大文件空间
+        }
+        hdr->setLength(numPos); //根据新指针位置设置新的文件大小
+    }
+    //写入的部分已经考虑了从中间写入的情况
 
-    if ((numBytes <= 0) || (position >= fileLength))
-        return 0; // check request
-    if ((position + numBytes) > fileLength)
-        hdr->extendFile(position + numBytes);
-    // numBytes = fileLength - position;
+    if (fileLength == 0)
+        return 0;
     DEBUG('f', "Writing %d bytes at %d, from file of length %d.\n",
           numBytes, position, fileLength);
 
     firstSector = divRoundDown(position, SectorSize);
     lastSector = divRoundDown(position + numBytes - 1, SectorSize);
     numSectors = 1 + lastSector - firstSector;
-
+    //    printf("firstSector is %d,lastSector is %d\n",firstSector,lastSector);
     buf = new char[numSectors * SectorSize];
 
     firstAligned = (bool)(position == (firstSector * SectorSize));
@@ -187,6 +199,24 @@ int OpenFile::WriteAt(char *from, int numBytes, int position)
 int OpenFile::Length()
 {
     return hdr->FileLength();
+}
+
+//----------------------------------------------------------------------
+// OpenFile::AllocateSpace
+// 	AllocateSpace
+//----------------------------------------------------------------------
+
+void OpenFile::AllocateSpace(int size)
+{
+    BitMap *freeMap;
+    freeMap = new BitMap(NumSectors); //新建一个BitMap对象
+    OpenFile *freeMapFile;
+    freeMapFile = new OpenFile(0);   //新建一个比特图对应的OpenFile对象
+    freeMap->FetchFrom(freeMapFile); //从磁盘中取出比特图的信息
+
+    hdr->extendFile(freeMap, size);  //实际的扩展操作
+    freeMap->WriteBack(freeMapFile); //写回比特图的信息
+    delete freeMap;
 }
 
 //----------------------------------------------------------------------

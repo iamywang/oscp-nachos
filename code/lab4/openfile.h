@@ -100,7 +100,8 @@ public:
 				  // than the UNIX idiom -- lseek to
 				  // end of file, tell, lseek back
 
-	void WriteBack(); // 写回
+	void WriteBack();			  // 写回
+	void AllocateSpace(int size); // 分配空间
 
 private:
 	FileHeader *hdr;  // Header for this file
