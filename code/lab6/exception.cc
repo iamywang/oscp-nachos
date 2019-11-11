@@ -24,6 +24,35 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include "addrspace.h"
+
+Thread *thread;
+AddrSpace *space;
+
+//----------------------------------------------------------------------
+// StartProcess
+//----------------------------------------------------------------------
+
+void StartProcess(int n)
+{
+    currentThread->space = space;
+    currentThread->space->InitRegisters();
+    currentThread->space->RestoreState();
+
+    machine->Run();
+    ASSERT(false);
+}
+
+//----------------------------------------------------------------------
+// AdvancePC
+//----------------------------------------------------------------------
+
+void AdvancePC()
+{
+    machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+    machine->WriteRegister(PCReg, machine->ReadRegister(PCReg) + 4);
+    machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg) + 4);
+}
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -47,13 +76,6 @@
 //	"which" is the kind of exception.  The list of possible exceptions
 //	are in machine.h.
 //----------------------------------------------------------------------
-
-void AdvancePC()
-{
-    machine->writeRegister(PrevPCReg, machine->readRegister(PCReg));
-    machine->writeRegister(PCReg, machine->readRegister(PCReg) + 4);
-    machine->writeRegister(NextPCReg, machine->readRegister(NextPCReg) + 4);
-}
 
 void ExceptionHandler(ExceptionType which)
 {

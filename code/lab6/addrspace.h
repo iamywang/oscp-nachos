@@ -15,6 +15,7 @@
 
 #include "copyright.h"
 #include "filesys.h"
+#include "bitmap.h"
 
 #define UserStackSize 1024 // increase this as necessary!
 
@@ -43,6 +44,7 @@ private:
                                // address space
 
   int spaceID;
+  static BitMap *bitmap;
 };
 
 #endif // ADDRSPACE_H

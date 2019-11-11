@@ -56,6 +56,7 @@ SwapHeader(NoffHeader *noffH)
 //
 //	"executable" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
+BitMap *AddrSpace::bitmap = new BitMap(NumPhysPages);
 
 AddrSpace::AddrSpace(OpenFile *executable)
 {
