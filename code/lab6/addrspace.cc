@@ -20,7 +20,9 @@
 #include "addrspace.h"
 #include "noff.h"
 
-//----------------------------------------------------------------------
+BitMap *AddrSpace::bitmap = new BitMap(NumPhysPages);
+
+//-----------------------------------------------------------------------
 // SwapHeader
 // 	Do little endian to big endian conversion on the bytes in the
 //	object file header, in case the file was generated on a little
@@ -56,7 +58,6 @@ SwapHeader(NoffHeader *noffH)
 //
 //	"executable" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
-BitMap *AddrSpace::bitmap = new BitMap(NumPhysPages);
 
 AddrSpace::AddrSpace(OpenFile *executable)
 {
@@ -73,8 +74,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
     }
     ASSERT(flag);
 
-    if (bitmap == 0)
-        bitmap = new BitMap(NumPhysPages);
     NoffHeader noffH;
     unsigned int i, size;
 
@@ -103,7 +102,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
     {
         pageTable[i].virtualPage = i; // for now, virtual page # = phys page #
         pageTable[i].physicalPage = bitmap->Find();
-        ASSERT(pageTable[i].physicalPage != -1);
         pageTable[i].valid = TRUE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
@@ -114,7 +112,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
     // zero out the entire address space, to zero the unitialized data segment
     // and the stack segment
-    //bzero(machine->mainMemory, size);
+    // bzero(machine->mainMemory, size);
 
     // then, copy in the code and data segments into memory
     if (noffH.code.size > 0)
@@ -144,7 +142,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
         executable->ReadAt(&(machine->mainMemory[data_phy_addr]),
                            noffH.initData.size, noffH.initData.inFileAddr);
     }
-    Print();
 }
 
 //----------------------------------------------------------------------
@@ -156,9 +153,7 @@ AddrSpace::~AddrSpace()
 {
     ThreadMap[spaceID] = 0;
     for (int i = 0; i < numPages; i++)
-    {
         bitmap->Clear(pageTable[i].physicalPage);
-    }
     delete[] pageTable;
 }
 
@@ -218,6 +213,10 @@ void AddrSpace::RestoreState()
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
 }
+
+//----------------------------------------------------------------------
+// AddrSpace::Print
+//----------------------------------------------------------------------
 
 void AddrSpace::Print()
 {
