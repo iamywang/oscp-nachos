@@ -12,14 +12,12 @@ CCFILES +=bitmap.cc\
 	fstest.cc\
 	openfile.cc\
 	synchdisk.cc\
-	disk.cc\
-	fstest.cc\
-	main.cc
+	disk.cc
 
 ifdef MAKEFILE_USERPROG_LOCAL
 DEFINES := $(DEFINES:FILESYS_STUB=FILESYS)
 else
-INCPATH += -I../userprog -I../lab5
+INCPATH += -I- -I../lab5 -I../userprog -I../filesys
 DEFINES += -DFILESYS_NEEDED -DFILESYS
 endif
 
