@@ -22,7 +22,6 @@ extern void Initialize(int argc, char **argv); // Initialization,
 extern void Cleanup();						   // Cleanup, called when
 											   // Nachos is done.
 
-extern bool ThreadMap[128];
 
 extern Thread *currentThread;		// the thread holding the CPU
 extern Thread *threadToBeDestroyed; // the thread that just finished
@@ -34,6 +33,7 @@ extern Timer *timer;				// the hardware alarm clock
 #ifdef USER_PROGRAM
 #include "machine.h"
 extern Machine *machine; // user program memory and registers
+extern bool ThreadMap[128];
 #endif
 
 #ifdef FILESYS_NEEDED // FILESYS or FILESYS_STUB

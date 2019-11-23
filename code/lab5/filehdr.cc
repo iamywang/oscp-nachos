@@ -60,7 +60,8 @@ bool FileHeader::Allocate(BitMap *freeMap, int fileSize)
         dataSectors[lastIndex] = -1;
     }
     //If the numSectors excends the rage of dataSectors,
-    //first handle the first 0--lastIndex-1 as before.//Then, ask bitmap to allocate a new sector to stroe
+    //first handle the first 0--lastIndex-1 as before
+    //Then, ask bitmap to allocate a new sector to stroe
     //the Secondary index block -- dataSectors2.
     //At last, write back the secondary index block into the sector.
     else
