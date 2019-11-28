@@ -145,6 +145,7 @@ void ExceptionHandler(ExceptionType which)
         {
             printf("Unexpected syscall %d %d\n", which, type);
             ASSERT(FALSE);
+            break;
         }
         }
     }

@@ -135,7 +135,7 @@ void FileHeader::Print()
         synchDisk->ReadSector(dataSectors[i], data);
         for (j = 0; (j < SectorSize) && (k < numBytes); j++, k++)
         {
-            if ('\040' <= data[j] && data[j] <= '\176') // isprint(data[j])
+            if ('\040' <= data[j] && data[j] <= '\176')
                 printf("%c", data[j]);
             else
                 printf("\\%x", (unsigned char)data[j]);
