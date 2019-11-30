@@ -211,7 +211,7 @@ void FileHeader::Print()
         int dataSectors2[NumDirect_Second];
         synchDisk->ReadSector(dataSectors[lastIndex], (char *)dataSectors2);
 
-        printf("FileHeader contents. File size: %d. File blocks:\n", numBytes);
+        printf("FileHeader contents. File size: %d. Two-Level-Index Header: %d. File blocks:\n", numBytes, dataSectors[lastIndex]);
         for (i = 0; i < lastIndex; i++)
             printf("%d ", dataSectors[i]);
         for (; i < numSectors; i++)
@@ -263,4 +263,61 @@ void FileHeader::setLength(int length)
 
 bool FileHeader::extendFile(BitMap *freeMap, int appendSize)
 {
+    if (appendSize <= 0)
+        return FALSE;
+
+    int restFileSize = SectorSize * numSectors - numBytes;
+
+    if (restFileSize >= appendSize)
+    {
+        numBytes += appendSize;
+        return TRUE;
+    }
+    else
+    {
+        int moreFileSize = appendSize - restFileSize;
+        if (freeMap->NumClear() < divRoundUp(moreFileSize, SectorSize))
+            return FALSE;
+        else if (NumDirect + NumDirect_Second <= numSectors + divRoundUp(moreFileSize, SectorSize))
+            return FALSE;
+
+        // 记录
+        int i = numSectors;
+        numBytes += appendSize;
+        numSectors += divRoundUp(moreFileSize, SectorSize);
+
+        // 二级索引判断
+        int lastIndex = NumDirect - 1;
+
+        if (dataSectors[lastIndex] == -1)
+        {
+            if (numSectors < lastIndex)
+                for (; i < numSectors; i++)
+                    dataSectors[i] = freeMap->Find();
+            else
+            {
+                for (; i < lastIndex; i++)
+                    dataSectors[i] = freeMap->Find();
+                dataSectors[lastIndex] = freeMap->Find();
+
+                int dataSectors2[NumDirect_Second];
+                for (; i < numSectors; i++)
+                    dataSectors2[i - lastIndex] = freeMap->Find();
+                // 写
+                synchDisk->WriteSector(dataSectors[lastIndex], (char *)dataSectors2);
+            }
+        }
+        else
+        {
+            // 读
+            int dataSectors2[NumDirect_Second];
+            synchDisk->ReadSector(dataSectors[lastIndex], (char *)dataSectors2);
+
+            for (; i < numSectors; i++)
+                dataSectors2[i - lastIndex] = freeMap->Find();
+            // 写
+            synchDisk->WriteSector(dataSectors[lastIndex], (char *)dataSectors2);
+        }
+    }
+    return TRUE;
 }

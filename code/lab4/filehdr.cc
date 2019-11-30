@@ -160,17 +160,25 @@ void FileHeader::setLength(int length)
 //----------------------------------------------------------------------
 
 bool FileHeader::extendFile(BitMap *freeMap, int appendSize)
+
 {
+    if (appendSize <= 0)
+        return FALSE;
+
     int oriSectors = numSectors;                                  //记录原空间大小
     numSectors = divRoundUp(appendSize, SectorSize) + oriSectors; //计算新扇区大小
+
     printf("New SectorsNum is %d\n", numSectors);
+
+    // 不能够执行扩展
     if (freeMap->NumClear() < numSectors - oriSectors)
     {
-        numSectors = oriSectors; //将空间大小复原
-        return FALSE;            // not enough space
+        numSectors = oriSectors;
+        return FALSE;
     }
 
-    for (int i = oriSectors; i < numSectors; i++) //申请新的扇区
+    //申请新的扇区
+    for (int i = oriSectors; i < numSectors; i++)
         dataSectors[i] = freeMap->Find();
     return TRUE;
 }

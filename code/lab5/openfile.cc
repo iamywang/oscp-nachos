@@ -210,10 +210,11 @@ void OpenFile::AllocateSpace(int size)
 {
     BitMap *freeMap;
     freeMap = new BitMap(NumSectors); //新建一个BitMap对象
-    OpenFile *freeMapFile;
-    freeMapFile = new OpenFile(0);   //新建一个比特图对应的OpenFile对象
-    freeMap->FetchFrom(freeMapFile); //从磁盘中取出比特图的信息
 
+    OpenFile *freeMapFile;
+    freeMapFile = new OpenFile(0); //新建一个比特图对应的OpenFile对象
+
+    freeMap->FetchFrom(freeMapFile); //从磁盘中取出比特图的信息
     hdr->extendFile(freeMap, size);  //实际的扩展操作
     freeMap->WriteBack(freeMapFile); //写回比特图的信息
     delete freeMap;

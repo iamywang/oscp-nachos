@@ -105,7 +105,7 @@ void ExceptionHandler(ExceptionType which)
 
             printf("Exec(%s):\n", filename);
 
-            //open file
+            // open file
             OpenFile *executable = fileSystem->Open(filename);
 
             if (executable == NULL)
@@ -114,21 +114,21 @@ void ExceptionHandler(ExceptionType which)
                 return;
             }
 
-            //new address space
+            // new address space
             space = new AddrSpace(executable);
             delete executable; // close file
 
-            //new and fork thread
+            // new and fork thread
             thread = new Thread("forked thread");
             thread->Fork(StartProcess, 1);
 
-            //run the new thread
+            // run the new thread
             currentThread->Yield();
 
-            //return spaceID
+            // return spaceID
             machine->WriteRegister(2, space->getSpaceID());
 
-            //advance PC
+            // advance PC
             AdvancePC();
             break;
         }

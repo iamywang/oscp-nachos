@@ -30,6 +30,7 @@ bool ThreadMap[128];
 
 #ifdef USER_PROGRAM // requires either FILESYS or FILESYS_STUB
 Machine *machine;   // user program memory and registers
+bool ThreadMap[128];
 #endif
 
 #ifdef NETWORK
