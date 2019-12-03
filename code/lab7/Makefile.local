@@ -1,0 +1,26 @@
+ifndef MAKEFILE_VM_LOCAL
+define MAKEFILE_VM_LOCAL
+yes
+endef
+
+# The default VM doesn't add any new source files.
+# As always, you should add new source files here.
+
+CCFILES += addrspace.cc\
+	bitmap.cc\
+	exception.cc\
+	progtest.cc\
+	console.cc\
+	machine.cc\
+	mipssim.cc\
+	translate.cc
+
+INCPATH += -I- -I../lab7 -I../bin -I../userprog -I../filesys
+
+ifdef MAKEFILE_FILESYS_LOCAL
+DEFINES += -DVM -DUSE_TLB
+else
+DEFINES += -DVM -DUSE_TLB -DFILESYS_NEEDED -DFILESYS_STUB
+endif
+
+endif # MAKEFILE_VM_LOCAL

@@ -2,6 +2,6 @@
 
 int main()
 {
-    Exec("../test/sort.noff");
+    Exec("halt");
     /* not reached */
 }
