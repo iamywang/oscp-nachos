@@ -92,6 +92,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     unsigned int phPages; // 已经分配的物理页
     unsigned int phSize;  // 分配的物理内存大小
     unsigned int coPages; // 代码区分配的物理页
+    char *buffer;
 
     if (numPages <= MinPages)
         // 需要分配的页并不多，因此无需虚拟内存
@@ -170,6 +171,21 @@ AddrSpace::AddrSpace(OpenFile *executable)
         // 交换文件
         if (numPages > MinPages)
         {
+            buffer = new char[PageSize];
+            int j, k = divRoundUp(noffH.code.size, PageSize) - 1;
+            for (j = 0; j < k; j++)
+            {
+                executable->ReadAt(buffer, PageSize, noffH.code.inFileAddr + j * PageSize);
+                swapFile->WriteAt(buffer, PageSize, noffH.code.virtualAddr + j * PageSize);
+            }
+            executable->ReadAt(buffer, noffH.code.size - k * PageSize, noffH.code.inFileAddr + j * PageSize);
+            swapFile->WriteAt(buffer, noffH.code.size - k * PageSize, noffH.code.virtualAddr + j * PageSize);
+            // 是否有数据
+            if (noffH.initData.size == 0)
+            {
+                delete swapFile;
+                delete[] buffer;
+            }
         }
     }
 
@@ -202,6 +218,17 @@ AddrSpace::AddrSpace(OpenFile *executable)
         // 交换文件
         if (numPages > MinPages)
         {
+            int j, k = divRoundUp(noffH.initData.size, PageSize) - 1 + data_start;
+            for (j = data_start; j < k; j++)
+            {
+                executable->ReadAt(buffer, PageSize, noffH.initData.inFileAddr + (j - data_start) * PageSize);
+                swapFile->WriteAt(buffer, PageSize, noffH.initData.virtualAddr + (j - data_start) * PageSize);
+            }
+            executable->ReadAt(buffer, noffH.initData.size - (k - data_start) * PageSize, noffH.initData.inFileAddr + j * PageSize);
+            swapFile->ReadAt(buffer, noffH.initData.size - (k - data_start) * PageSize, noffH.initData.virtualAddr + j * PageSize);
+            // release
+            delete swapFile;
+            delete[] buffer;
         }
     }
 }
