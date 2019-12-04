@@ -17,18 +17,20 @@
 #include "filesys.h"
 #include "bitmap.h"
 
-#define UserStackSize 1024 // increase this as necessary!
+#define UserStackSize 1024 // 用户栈大小
+#define MaxPages 32        // 可装入内存最大页数
+#define MinPages 16        // 可装入内存最小页数
+#define CodePages 4        // 代码区最大页数
+#define DataPages 12       // 数据区最大页数
 
 class AddrSpace
 {
 public:
   AddrSpace(OpenFile *executable); // Create an address space,
-                                   // initializing it with the program
-                                   // stored in the file "executable"
+                                   // initializing it with the program stored in the file "executable"
   ~AddrSpace();                    // De-allocate an address space
 
-  void InitRegisters(); // Initialize user-level CPU registers,
-                        // before jumping to user code
+  void InitRegisters(); // Initialize user-level CPU registers, before jumping to user code
 
   void SaveState();    // Save/restore address space-specific
   void RestoreState(); // info on a context switch
@@ -38,13 +40,14 @@ public:
   int getSpaceID() { return spaceID; }
 
 private:
-  TranslationEntry *pageTable; // Assume linear page table translation
-                               // for now!
-  unsigned int numPages;       // Number of pages in the virtual
-                               // address space
+  TranslationEntry *pageTable; // Linear Table
+  unsigned int numPages;       // Number of pages in the virtual address space
 
-  int spaceID;
-  static BitMap *bitmap;
+  int spaceID;           // Current Space ID
+  static BitMap *bitmap; // Bitmap
+
+  unsigned int count; // 计数器
+  char *vmName;       // 交换文件文件名
 };
 
 #endif // ADDRSPACE_H

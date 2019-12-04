@@ -61,9 +61,9 @@ SwapHeader(NoffHeader *noffH)
 
 AddrSpace::AddrSpace(OpenFile *executable)
 {
+    // extended addrSpace
     bool flag = false;
     for (int i = 0; i < 128; i++)
-    {
         if (!ThreadMap[i])
         {
             ThreadMap[i] = 1;
@@ -71,76 +71,138 @@ AddrSpace::AddrSpace(OpenFile *executable)
             spaceID = i;
             break;
         }
-    }
     ASSERT(flag);
 
     NoffHeader noffH;
-    unsigned int i, size;
+
+    unsigned int size; // 需要的内存大小
 
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
-    if ((noffH.noffMagic != NOFFMAGIC) &&
-        (WordToHost(noffH.noffMagic) == NOFFMAGIC))
+    if ((noffH.noffMagic != NOFFMAGIC) && (WordToHost(noffH.noffMagic) == NOFFMAGIC))
         SwapHeader(&noffH);
     ASSERT(noffH.noffMagic == NOFFMAGIC);
 
-    // how big is address space?
-    size = noffH.code.size + noffH.initData.size + noffH.uninitData.size + UserStackSize; // we need to increase the size
-                                                                                          // to leave room for the stack
+    // Address Space
+    size = noffH.code.size + noffH.initData.size + noffH.uninitData.size + UserStackSize;
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-    ASSERT(numPages <= NumPhysPages); // check we're not trying
-                                      // to run anything too big --
-                                      // at least until we have
-                                      // virtual memory
+    // Virtual Memory
+    OpenFile *swapFile;   // 分页文件
+    unsigned int phPages; // 已经分配的物理页
+    unsigned int phSize;  // 分配的物理内存大小
+    unsigned int coPages; // 代码区分配的物理页
 
-    DEBUG('a', "Initializing address space, num pages %d, size %d\n",
-          numPages, size);
-    // first, set up the translation
-    pageTable = new TranslationEntry[numPages];
-    for (i = 0; i < numPages; i++)
+    if (numPages <= MinPages)
+        // 需要分配的页并不多，因此无需虚拟内存
+        phPages = numPages;
+    else
     {
-        pageTable[i].virtualPage = i; // for now, virtual page # = phys page #
+        // 需要分配的页足够多，因此需要虚拟内存
+        phPages = MinPages;
+        // 创建分页文件
+        vmName = "SwapFile\0";
+        fileSystem->Create(vmName, size);
+        swapFile = fileSystem->Open(vmName);
+    }
+    // 实际待分配的物理内存
+    phSize = phPages * PageSize;
+    ASSERT(phPages <= bitmap->NumClear());
+    DEBUG('a', "Initializing address space, num pages %d, size %d\n", phPages, phSize);
+
+    // 首先，初始化页表
+    pageTable = new TranslationEntry[numPages];
+    // 计算代码区需要页数，并且分配物理页
+    count = divRoundUp(noffH.code.size, PageSize);
+    if (count > CodePages)
+        count = CodePages;
+    coPages = count;
+    for (int i = 0; i < count; i++)
+    {
+        pageTable[i].virtualPage = i;
+        pageTable[i].physicalPage = bitmap->Find();
+        pageTable[i].valid = FALSE;
+        pageTable[i].use = FALSE;
+        pageTable[i].dirty = FALSE;
+        pageTable[i].readOnly = FALSE;
+    }
+    // 不能进入物理内存的部分分配页表，其中物理页为-1
+    for (int i = count; i < numPages - 1; i++)
+    {
+        pageTable[i].virtualPage = i;
+        pageTable[i].physicalPage = -1;
+        pageTable[i].valid = FALSE;
+        pageTable[i].use = FALSE;
+        pageTable[i].dirty = FALSE;
+        pageTable[i].readOnly = FALSE;
+    }
+    // 为最后一个虚拟页分配物理页
+    for (int i = numPages - 1; i < numPages - 1; i++)
+    {
+        pageTable[i].virtualPage = i;
         pageTable[i].physicalPage = bitmap->Find();
         pageTable[i].valid = TRUE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
-        pageTable[i].readOnly = FALSE; // if the code segment was entirely on
-                                       // a separate page, we could set its
-                                       // pages to be read-only
+        pageTable[i].readOnly = FALSE;
+        // 使用的物理页个数加1
+        count++;
     }
 
-    // zero out the entire address space, to zero the unitialized data segment
-    // and the stack segment
-    // bzero(machine->mainMemory, size);
-
-    // then, copy in the code and data segments into memory
+    // 代码区部分
     if (noffH.code.size > 0)
     {
-        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n",
-              noffH.code.virtualAddr, noffH.code.size);
-
-        //code start from this page
-        int code_page = noffH.code.virtualAddr / PageSize;
-        //calculate physical address using page and offset (0);
-        int code_phy_addr = pageTable[code_page].physicalPage * PageSize;
-        //read memory
-        executable->ReadAt(&(machine->mainMemory[code_phy_addr]),
-                           noffH.code.size, noffH.code.inFileAddr);
+        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
+        // 物理内存
+        unsigned int code_start, code_end;
+        // 计算
+        code_start = divRoundUp(noffH.code.virtualAddr, PageSize);
+        code_end = code_start + coPages;
+        // 分配
+        for (int i = code_start; i < code_end; i++)
+        {
+            // 计算物理地址
+            int code_phy_addr = pageTable[i].physicalPage * PageSize;
+            // 读内存
+            executable->ReadAt(&(machine->mainMemory[code_phy_addr]), PageSize, noffH.code.inFileAddr + i * PageSize);
+            pageTable[i].valid = TRUE;
+        }
+        // 交换文件
+        if (numPages > MinPages)
+        {
+        }
     }
+
+    // 数据区部分
     if (noffH.initData.size > 0)
     {
-        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n",
-              noffH.initData.virtualAddr, noffH.initData.size);
-        //data start from this page
-        int data_page = noffH.initData.virtualAddr / PageSize;
-        //first data's offset of this page
-        int data_offset = noffH.initData.virtualAddr % PageSize;
-        //calculate physical address using page and offset ;
-        int data_phy_addr = pageTable[data_page].physicalPage * PageSize + data_offset;
-        //read memory
-        executable->ReadAt(&(machine->mainMemory[data_phy_addr]),
-                           noffH.initData.size, noffH.initData.inFileAddr);
+        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
+        // 物理内存
+        unsigned int data_start, data_end;
+        unsigned int daPages;
+        // 计算
+        data_start = divRoundUp(noffH.initData.virtualAddr, PageSize);
+        daPages = divRoundUp(noffH.initData.size, PageSize);
+        if (daPages <= DataPages)
+            data_end = data_start + daPages;
+        else
+            data_end = data_start + DataPages;
+        // 分配
+        for (int i = data_start; i < data_end; i++)
+        {
+            if (pageTable[i].valid == FALSE)
+                pageTable[i].physicalPage = bitmap->Find();
+            // 计算地址
+            int data_phy_addr = pageTable[i].physicalPage * PageSize;
+            // 读内存
+            executable->ReadAt(&(machine->mainMemory[data_phy_addr]), PageSize, noffH.initData.inFileAddr + i * PageSize);
+            pageTable[i].valid = TRUE;
+        }
+        count += DataPages;
+        // 交换文件
+        if (numPages > MinPages)
+        {
+        }
     }
 }
 
@@ -152,6 +214,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
 AddrSpace::~AddrSpace()
 {
     ThreadMap[spaceID] = 0;
+
+    // Clear pageTable
     for (int i = 0; i < numPages; i++)
         bitmap->Clear(pageTable[i].physicalPage);
     delete[] pageTable;
@@ -169,9 +233,7 @@ AddrSpace::~AddrSpace()
 
 void AddrSpace::InitRegisters()
 {
-    int i;
-
-    for (i = 0; i < NumTotalRegs; i++)
+    for (int i = 0; i < NumTotalRegs; i++)
         machine->WriteRegister(i, 0);
 
     // Initial program counter -- must be location of "Start"
@@ -192,8 +254,6 @@ void AddrSpace::InitRegisters()
 // AddrSpace::SaveState
 // 	On a context switch, save any machine state, specific
 //	to this address space, that needs saving.
-//
-//	For now, nothing!
 //----------------------------------------------------------------------
 
 void AddrSpace::SaveState()
@@ -204,8 +264,6 @@ void AddrSpace::SaveState()
 // AddrSpace::RestoreState
 // 	On a context switch, restore the machine state so that
 //	this address space can run.
-//
-//      For now, tell the machine where to find the page table.
 //----------------------------------------------------------------------
 
 void AddrSpace::RestoreState()
@@ -216,16 +274,17 @@ void AddrSpace::RestoreState()
 
 //----------------------------------------------------------------------
 // AddrSpace::Print
+// Print virtual memory and physical memory page and table infomation.
 //----------------------------------------------------------------------
 
 void AddrSpace::Print()
 {
-    printf("page table dump: %d pages in total\n", numPages);
-    printf("============================================\n");
-    printf("\tVirtual Page, \tPhysical Page\n");
+    printf("Page table dump: %d pages in total\n", 5);
+    printf("=================================================\n");
+    printf("\tVirtualPage\tPhysicalPage\tValid\t Use\tDirty\n");
     for (int i = 0; i < numPages; i++)
-    {
-        printf("\t%d, \t\t%d\n", pageTable[i].virtualPage, pageTable[i].physicalPage);
-    }
-    printf("============================================\n");
+        printf("\t\t\t\t%d \t\t\t\t\t%d \t\t\t\t\t%d \t\t%d \t\t%d\n",
+               pageTable[i].virtualPage, pageTable[i].physicalPage,
+               pageTable[i].valid, pageTable[i].use, pageTable[i].dirty);
+    printf("=================================================\n");
 }

@@ -136,7 +136,12 @@ void ExceptionHandler(ExceptionType which)
         {
             printf("Execute system call of Exit()\n");
 
-            //machine->clear();
+            int exitAddr = machine->ReadRegister(4);
+            int *exitStatus;
+            machine->ReadMem(exitAddr, 4, exitStatus);
+            exitStatus = &exitAddr;
+            printf("Exit with !%d\n", *exitStatus);
+
             AdvancePC();
             currentThread->Finish();
             break;
