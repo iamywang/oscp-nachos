@@ -80,6 +80,7 @@ void AdvancePC()
 void ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
+    extern BitMap *bitmap; // 比特图
 
     // 系统调用异常
     if (which == SyscallException)
@@ -160,7 +161,6 @@ void ExceptionHandler(ExceptionType which)
     else if (which == PageFaultException)
     {
         AddrSpace *pageSpace = currentThread->space;              // 地址空间
-        BitMap *bitmap = pageSpace->bitmap;                       // 比特图
         OpenFile *swapFile = fileSystem->Open(pageSpace->vmName); // 交换文件
 
         unsigned int pageFaultAddress; // 页错误地址
@@ -176,7 +176,8 @@ void ExceptionHandler(ExceptionType which)
             pageSpace->pageTable[page].valid = TRUE;
             pageSpace->pageTable[page].use = TRUE;
             pageSpace->pageTable[page].dirty = FALSE;
-            swapFile->ReadAt();
+            swapFile->ReadAt(&(machine->mainMemory[pageSpace->pageTable[page].physicalPage]),
+                             PageSize, pageSpace->pageTable[page].virtualPage * PageSize);
         }
         // 需要使用页面置换算法
         else
@@ -187,13 +188,15 @@ void ExceptionHandler(ExceptionType which)
             if (pageSpace->pageTable[readySwap].dirty == TRUE)
             {
                 // 写回交换文件
-                swapFile->WriteAt();
+                swapFile->WriteAt(&(machine->mainMemory[pageSpace->pageTable[readySwap].physicalPage * PageSize]),
+                                  PageSize, pageSpace->pageTable[page].virtualPage);
                 pageSpace->pageTable[readySwap].dirty = FALSE;
             }
             pageSpace->pageTable[page].valid = FALSE;
             pageSpace->pageTable[page].use = TRUE;
             pageSpace->pageTable[page].dirty = FALSE;
-            swapFile->ReadAt();
+            swapFile->ReadAt(&(machine->mainMemory[pageSpace->pageTable[page].physicalPage]),
+                             PageSize, pageSpace->pageTable[page].virtualPage * PageSize);
         }
         pageSpace->pageTable[page].valid = TRUE;
         unsigned int vpn = pageSpace->pageTable[page].virtualPage;

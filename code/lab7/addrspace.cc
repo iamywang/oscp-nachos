@@ -20,8 +20,6 @@
 #include "addrspace.h"
 #include "noff.h"
 
-BitMap *AddrSpace::bitmap = new BitMap(NumPhysPages);
-
 //-----------------------------------------------------------------------
 // SwapHeader
 // 	Do little endian to big endian conversion on the bytes in the
@@ -117,12 +115,13 @@ AddrSpace::AddrSpace(OpenFile *executable)
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", phPages, phSize);
 
     // 首先，初始化页表
-    pageTable = new TranslationEntry[numPages];
     // 计算代码区需要页数，并且分配物理页
     count = divRoundUp(noffH.code.size, PageSize);
     if (count > CodePages)
         count = CodePages;
     coPages = count;
+    pageTable = new TranslationEntry[numPages];
+
     for (int i = 0; i < count; i++)
     {
         pageTable[i].virtualPage = i;

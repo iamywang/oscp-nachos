@@ -39,15 +39,14 @@ public:
 
   int getSpaceID() { return spaceID; }
 
-private:
-  TranslationEntry *pageTable; // Linear Table
-  unsigned int numPages;       // Number of pages in the virtual address space
-
-  int spaceID;           // Current Space ID
-  static BitMap *bitmap; // Bitmap
-
   unsigned int count; // 计数器
   char *vmName;       // 交换文件文件名
+
+  TranslationEntry *pageTable;
+
+private:
+  unsigned int numPages; // Number of pages in the virtual address space
+  int spaceID;           // Current Space ID
 };
 
 #endif // ADDRSPACE_H
