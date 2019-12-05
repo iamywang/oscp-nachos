@@ -144,7 +144,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
         pageTable[i].readOnly = FALSE;
     }
     // 为最后一个虚拟页分配物理页
-    for (int i = numPages - 1; i < numPages - 1; i++)
+    for (int i = numPages - 1; i < numPages; i++)
     {
         pageTable[i].virtualPage = i;
         pageTable[i].physicalPage = bitmap->Find();
@@ -237,6 +237,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
             delete[] buffer;
         }
     }
+
+    Print();
 }
 
 //----------------------------------------------------------------------
@@ -314,10 +316,9 @@ void AddrSpace::Print()
 {
     printf("Page table dump: %d pages in total\n", 5);
     printf("=================================================\n");
-    printf("\tVirtualPage\tPhysicalPage\tValid\t Use\tDirty\n");
+    printf("\tvPage\tpPage\tValid\t Use\tDirty\n");
     for (int i = 0; i < numPages; i++)
-        printf("\t\t\t\t%d \t\t\t\t\t%d \t\t\t\t\t%d \t\t%d \t\t%d\n",
-               pageTable[i].virtualPage, pageTable[i].physicalPage,
+        printf("\t  %d \t  %d \t  %d \t  %d \t  %d\n", pageTable[i].virtualPage, pageTable[i].physicalPage,
                pageTable[i].valid, pageTable[i].use, pageTable[i].dirty);
     printf("=================================================\n");
 }

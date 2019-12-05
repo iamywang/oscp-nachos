@@ -222,20 +222,22 @@ ExceptionType Machine::Translate(int virtAddr, int *physAddr, int size, bool wri
 	if (!vpCheck)
 		for (int j = 0; j < MaxPages; j++)
 			if (vpTable[j] == -1)
+			{
 				vpTable[j] = vpn;
+				printf("Successfully Load Page # %d.\n", vpn);
+			}
 
 	if (tlb == NULL)
 	{ // => page table => vpn is index into table
 		if (vpn >= pageTableSize)
 		{
-			DEBUG('a', "virtual page # %d too large for page table size %d!\n",
-				  virtAddr, pageTableSize);
+			DEBUG('a', "virtual page # %d too large for page table size %d!\n", virtAddr, pageTableSize);
 			return AddressErrorException;
 		}
 		else if (!pageTable[vpn].valid)
 		{
-			DEBUG('a', "virtual page # %d too large for page table size %d!\n",
-				  virtAddr, pageTableSize);
+			DEBUG('a', "virtual page # %d too large for page table size %d!\n", virtAddr, pageTableSize);
+			printf("PageFault: Need Page # %d!\n", vpn);
 			return PageFaultException;
 		}
 		entry = &pageTable[vpn];

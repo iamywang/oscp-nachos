@@ -160,8 +160,6 @@ void ExceptionHandler(ExceptionType which)
     // 页错误异常
     else if (which == PageFaultException)
     {
-        printf("Enter Page Fault Handler.\n");
-
         AddrSpace *pageSpace = currentThread->space;              // 地址空间
         OpenFile *swapFile = fileSystem->Open(pageSpace->vmName); // 交换文件
 
@@ -184,7 +182,7 @@ void ExceptionHandler(ExceptionType which)
         // 需要使用页面置换算法
         else
         {
-            // 选取要被换出的页
+            // 选取要被换出的页RANDOM选取
             unsigned int readySwap = 0; // 0 ~ MaxPages
             // 是否被修改
             if (pageSpace->pageTable[readySwap].dirty == TRUE)

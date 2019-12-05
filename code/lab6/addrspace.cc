@@ -127,6 +127,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
         //read memory
         executable->ReadAt(&(machine->mainMemory[data_phy_addr]), noffH.initData.size, noffH.initData.inFileAddr);
     }
+
+    Print();
 }
 
 //----------------------------------------------------------------------
@@ -207,10 +209,9 @@ void AddrSpace::Print()
 {
     printf("Page table dump: %d pages in total\n", 5);
     printf("=================================================\n");
-    printf("\tVirtualPage\tPhysicalPage\tValid\t Use\tDirty\n");
+    printf("\tvPage\tpPage\tValid\t Use\tDirty\n");
     for (int i = 0; i < numPages; i++)
-        printf("\t\t\t\t%d \t\t\t\t\t%d \t\t\t\t\t%d \t\t%d \t\t%d\n",
-               pageTable[i].virtualPage, pageTable[i].physicalPage,
+        printf("\t  %d \t  %d \t  %d \t  %d \t  %d\n", pageTable[i].virtualPage, pageTable[i].physicalPage,
                pageTable[i].valid, pageTable[i].use, pageTable[i].dirty);
     printf("=================================================\n");
 }
