@@ -30,10 +30,15 @@ bool ThreadMap[128];
 
 #ifdef USER_PROGRAM // requires either FILESYS or FILESYS_STUB
 Machine *machine;   // user program memory and registers
+BitMap *bitmap = new BitMap(NumPhysPages);
 #endif
 
 #ifdef NETWORK
 PostOffice *postOffice;
+#endif
+
+#ifdef VM
+unsigned int vpTable[MaxPages];
 #endif
 
 // External definition, to allow us to take a pointer to this function
@@ -79,10 +84,9 @@ void Initialize(int argc, char **argv)
     char *debugArgs = "";
     bool randomYield = FALSE;
 
-    bzero(ThreadMap, 128);
-
 #ifdef USER_PROGRAM
     bool debugUserProg = FALSE; // single step user program
+    bzero(ThreadMap, 128);
 #endif
 #ifdef FILESYS_NEEDED
     bool format = FALSE; // format disk
@@ -91,6 +95,10 @@ void Initialize(int argc, char **argv)
     double rely = 1;  // network reliability
     double order = 1; // network orderability
     int netname = 0;  // UNIX socket name
+#endif
+#ifdef VM
+    for (int i = 0; i < MaxPages; i++)
+        vpTable[i] = -1;
 #endif
 
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount)

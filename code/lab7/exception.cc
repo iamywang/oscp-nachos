@@ -160,6 +160,8 @@ void ExceptionHandler(ExceptionType which)
     // 页错误异常
     else if (which == PageFaultException)
     {
+        printf("Enter Page Fault Handler.\n");
+
         AddrSpace *pageSpace = currentThread->space;              // 地址空间
         OpenFile *swapFile = fileSystem->Open(pageSpace->vmName); // 交换文件
 

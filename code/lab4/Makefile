@@ -20,7 +20,7 @@ include ../threads/Makefile.local
 include ../filesys/Makefile.local
 #include ../userprog/Makefile.local
 #include ../vm/Makefile.local
-#include ../filesys/Makefile.local
+include ../lab4/Makefile.local
 
 include ../Makefile.dep
 include ../Makefile.common

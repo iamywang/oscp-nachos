@@ -109,18 +109,20 @@ AddrSpace::AddrSpace(OpenFile *executable)
         fileSystem->Create(vmName, size);
         swapFile = fileSystem->Open(vmName);
     }
+
     // 实际待分配的物理内存
     phSize = phPages * PageSize;
     ASSERT(phPages <= bitmap->NumClear());
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", phPages, phSize);
 
     // 首先，初始化页表
+    pageTable = new TranslationEntry[numPages];
+
     // 计算代码区需要页数，并且分配物理页
     count = divRoundUp(noffH.code.size, PageSize);
     if (count > CodePages)
         count = CodePages;
     coPages = count;
-    pageTable = new TranslationEntry[numPages];
 
     for (int i = 0; i < count; i++)
     {

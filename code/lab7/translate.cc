@@ -190,6 +190,9 @@ ExceptionType Machine::Translate(int virtAddr, int *physAddr, int size, bool wri
 	TranslationEntry *entry;
 	unsigned int pageFrame;
 
+	// 设置页表
+	pageTable = currentThread->space->pageTable;
+
 	DEBUG('a', "\tTranslate 0x%x, %s: ", virtAddr, writing ? "write" : "read");
 
 	// check for alignment errors

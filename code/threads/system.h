@@ -31,7 +31,9 @@ extern Timer *timer;				// the hardware alarm clock
 
 #ifdef USER_PROGRAM
 #include "machine.h"
+#include "bitmap.h"
 extern Machine *machine; // user program memory and registers
+extern BitMap *bitmap;
 #endif
 
 #ifdef FILESYS_NEEDED // FILESYS or FILESYS_STUB
@@ -48,6 +50,10 @@ extern bool ThreadMap[128];
 #ifdef NETWORK
 #include "post.h"
 extern PostOffice *postOffice;
+#endif
+
+#ifdef VM
+extern unsigned int vpTable[MaxPages];
 #endif
 
 #endif // SYSTEM_H
