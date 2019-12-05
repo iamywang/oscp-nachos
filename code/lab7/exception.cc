@@ -81,7 +81,8 @@ void ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
 
-    if ((which == SyscallException))
+    // 系统调用异常
+    if (which == SyscallException)
     {
         switch (type)
         {
@@ -154,6 +155,64 @@ void ExceptionHandler(ExceptionType which)
         }
         }
     }
+
+    // 页错误异常
+    else if (which == PageFaultException)
+    {
+        AddrSpace *pageSpace = currentThread->space;              // 地址空间
+        BitMap *bitmap = pageSpace->bitmap;                       // 比特图
+        OpenFile *swapFile = fileSystem->Open(pageSpace->vmName); // 交换文件
+
+        unsigned int pageFaultAddress; // 页错误地址
+        unsigned int page;             // 需要加载的页号
+
+        pageFaultAddress = machine->registers[BadVAddrReg];
+        page = pageFaultAddress / PageSize;
+
+        if (bitmap->NumClear() >= 1 && pageSpace->count < MaxPages)
+        {
+            // 从交换文件换入物理内存
+            pageSpace->count++;
+            pageSpace->pageTable[page].valid = TRUE;
+            pageSpace->pageTable[page].use = TRUE;
+            pageSpace->pageTable[page].dirty = FALSE;
+            swapFile->ReadAt();
+        }
+        // 需要使用页面置换算法
+        else
+        {
+            // 选取要被换出的页
+            unsigned int readySwap = 0; // 0 ~ MaxPages
+            // 是否被修改
+            if (pageSpace->pageTable[readySwap].dirty == TRUE)
+            {
+                // 写回交换文件
+                swapFile->WriteAt();
+                pageSpace->pageTable[readySwap].dirty = FALSE;
+            }
+            pageSpace->pageTable[page].valid = FALSE;
+            pageSpace->pageTable[page].use = TRUE;
+            pageSpace->pageTable[page].dirty = FALSE;
+            swapFile->ReadAt();
+        }
+        pageSpace->pageTable[page].valid = TRUE;
+        unsigned int vpn = pageSpace->pageTable[page].virtualPage;
+
+        extern unsigned int vpTable[MaxPages]; // 存放虚拟页号的数组
+        bool vpCheck = FALSE;                  // 是否有需要的页
+
+        // 检查是否已经有需要的页
+        for (int j = 0; j < MaxPages; j++)
+            if (vpTable[j] == vpn)
+                vpCheck = TRUE;
+        // 加载
+        if (!vpCheck)
+            for (int j = 0; j < MaxPages; j++)
+                if (vpTable[j] == -1)
+                    vpTable[j] = vpn;
+    }
+
+    // 未定义异常
     else
     {
         printf("Unexpected user mode exception %d %d\n", which, type);

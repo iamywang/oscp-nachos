@@ -77,6 +77,11 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
     unsigned int size; // 需要的内存大小
 
+    // 初始化记录页号的表
+    extern unsigned int vpTable[MaxPages];
+    for (int i = 0; i < MaxPages; i++)
+        vpTable[i] = -1;
+
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) && (WordToHost(noffH.noffMagic) == NOFFMAGIC))
         SwapHeader(&noffH);
