@@ -21,6 +21,9 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
+#include <stdlib.h>
+#include <time.h>
+
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
@@ -185,7 +188,11 @@ void ExceptionHandler(ExceptionType which)
         else
         {
             // 选取要被换出的页RANDOM选取
-            unsigned int readySwap = 0; // 0 ~ MaxPages
+            srand((unsigned)time(NULL));
+            unsigned int readySwap = rand() % MaxPages; // 0 ~ MaxPages
+            while (!pageSpace->pageTable[readySwap].valid)
+                readySwap = rand() % MaxPages;
+
             // 是否被修改
             if (pageSpace->pageTable[readySwap].dirty == TRUE)
             {
@@ -204,6 +211,7 @@ void ExceptionHandler(ExceptionType which)
                     break;
                 }
             // 换入页
+            pageSpace->pageTable[page].physicalPage = pageSpace->pageTable[readySwap].physicalPage;
             pageSpace->pageTable[page].valid = FALSE;
             pageSpace->pageTable[page].use = TRUE;
             pageSpace->pageTable[page].dirty = FALSE;
@@ -219,6 +227,7 @@ void ExceptionHandler(ExceptionType which)
             {
                 vpTable[j] = vpn;
                 printf("Page Fault Handler: Successfully Load Page # %d.\n", vpn);
+                pageSpace->Print();
                 break;
             }
     }
