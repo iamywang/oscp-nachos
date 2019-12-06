@@ -212,20 +212,14 @@ ExceptionType Machine::Translate(int virtAddr, int *physAddr, int size, bool wri
 	offset = (unsigned)virtAddr % PageSize;
 
 	extern unsigned int vpTable[MaxPages]; // 存放虚拟页号的数组
-	bool vpCheck = FALSE;				   // 是否有需要的页
 
 	// 检查是否已经有需要的页
 	for (int j = 0; j < MaxPages; j++)
 		if (vpTable[j] == vpn)
-			vpCheck = TRUE;
-	// 加载
-	if (!vpCheck)
-		for (int j = 0; j < MaxPages; j++)
-			if (vpTable[j] == -1)
-			{
-				vpTable[j] = vpn;
-				printf("Successfully Load Page # %d.\n", vpn);
-			}
+		{
+			// printf("Translate: Successfully Find Page # %d.\n", vpn);
+			break;
+		}
 
 	if (tlb == NULL)
 	{ // => page table => vpn is index into table
@@ -237,7 +231,7 @@ ExceptionType Machine::Translate(int virtAddr, int *physAddr, int size, bool wri
 		else if (!pageTable[vpn].valid)
 		{
 			DEBUG('a', "virtual page # %d too large for page table size %d!\n", virtAddr, pageTableSize);
-			printf("PageFault: Need Page # %d!\n", vpn);
+			printf("Page Fault Exception: Need Page # %d!\n", vpn);
 			return PageFaultException;
 		}
 		entry = &pageTable[vpn];

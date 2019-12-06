@@ -163,8 +163,9 @@ void ExceptionHandler(ExceptionType which)
         AddrSpace *pageSpace = currentThread->space;              // 地址空间
         OpenFile *swapFile = fileSystem->Open(pageSpace->vmName); // 交换文件
 
-        unsigned int pageFaultAddress; // 页错误地址
-        unsigned int page;             // 需要加载的页号
+        unsigned int pageFaultAddress;         // 页错误地址
+        unsigned int page;                     // 需要加载的页号
+        extern unsigned int vpTable[MaxPages]; // 存放虚拟页号的数组
 
         pageFaultAddress = machine->registers[BadVAddrReg];
         page = pageFaultAddress / PageSize;
@@ -173,10 +174,11 @@ void ExceptionHandler(ExceptionType which)
         {
             // 从交换文件换入物理内存
             pageSpace->count++;
+            pageSpace->pageTable[page].physicalPage = bitmap->Find();
             pageSpace->pageTable[page].valid = TRUE;
             pageSpace->pageTable[page].use = TRUE;
             pageSpace->pageTable[page].dirty = FALSE;
-            swapFile->ReadAt(&(machine->mainMemory[pageSpace->pageTable[page].physicalPage]),
+            swapFile->ReadAt(&(machine->mainMemory[pageSpace->pageTable[page].physicalPage * PageSize]),
                              PageSize, pageSpace->pageTable[page].virtualPage * PageSize);
         }
         // 需要使用页面置换算法
@@ -189,30 +191,36 @@ void ExceptionHandler(ExceptionType which)
             {
                 // 写回交换文件
                 swapFile->WriteAt(&(machine->mainMemory[pageSpace->pageTable[readySwap].physicalPage * PageSize]),
-                                  PageSize, pageSpace->pageTable[page].virtualPage);
+                                  PageSize, pageSpace->pageTable[page].virtualPage * PageSize);
                 pageSpace->pageTable[readySwap].dirty = FALSE;
             }
+            // 释放页
+            pageSpace->pageTable[readySwap].valid = FALSE;
+            for (int j = 0; j < MaxPages; j++)
+                if (vpTable[j] == readySwap)
+                {
+                    vpTable[j] = -1;
+                    printf("Page Fault Handler: Successfully Release Page # %d.\n", readySwap);
+                    break;
+                }
+            // 换入页
             pageSpace->pageTable[page].valid = FALSE;
             pageSpace->pageTable[page].use = TRUE;
             pageSpace->pageTable[page].dirty = FALSE;
-            swapFile->ReadAt(&(machine->mainMemory[pageSpace->pageTable[page].physicalPage]),
+            swapFile->ReadAt(&(machine->mainMemory[pageSpace->pageTable[page].physicalPage * PageSize]),
                              PageSize, pageSpace->pageTable[page].virtualPage * PageSize);
         }
         pageSpace->pageTable[page].valid = TRUE;
         unsigned int vpn = pageSpace->pageTable[page].virtualPage;
 
-        extern unsigned int vpTable[MaxPages]; // 存放虚拟页号的数组
-        bool vpCheck = FALSE;                  // 是否有需要的页
-
-        // 检查是否已经有需要的页
+        // 加载页
         for (int j = 0; j < MaxPages; j++)
-            if (vpTable[j] == vpn)
-                vpCheck = TRUE;
-        // 加载
-        if (!vpCheck)
-            for (int j = 0; j < MaxPages; j++)
-                if (vpTable[j] == -1)
-                    vpTable[j] = vpn;
+            if (vpTable[j] == -1)
+            {
+                vpTable[j] = vpn;
+                printf("Page Fault Handler: Successfully Load Page # %d.\n", vpn);
+                break;
+            }
     }
 
     // 未定义异常

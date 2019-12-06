@@ -60,12 +60,12 @@ SwapHeader(NoffHeader *noffH)
 AddrSpace::AddrSpace(OpenFile *executable)
 {
     // extended addrSpace
-    bool flag = false;
+    bool flag = FALSE;
     for (int i = 0; i < 128; i++)
         if (!ThreadMap[i])
         {
             ThreadMap[i] = 1;
-            flag = true;
+            flag = TRUE;
             spaceID = i;
             break;
         }
@@ -154,6 +154,13 @@ AddrSpace::AddrSpace(OpenFile *executable)
         pageTable[i].readOnly = FALSE;
         // 使用的物理页个数加1
         count++;
+        for (int vpc = 0; vpc < MaxPages; vpc++)
+            if (vpTable[vpc] == -1)
+            {
+                vpTable[vpc] = i;
+                printf("AddrSpace: Successfully Load Page # %d.\n", i);
+                break;
+            }
     }
 
     // 代码区部分
@@ -173,6 +180,13 @@ AddrSpace::AddrSpace(OpenFile *executable)
             // 读内存
             executable->ReadAt(&(machine->mainMemory[code_phy_addr]), PageSize, noffH.code.inFileAddr + i * PageSize);
             pageTable[i].valid = TRUE;
+            for (int vpc = 0; vpc < MaxPages; vpc++)
+                if (vpTable[vpc] == -1)
+                {
+                    vpTable[vpc] = i;
+                    printf("AddrSpace: Successfully Code Load Page # %d.\n", i);
+                    break;
+                }
         }
         // 交换文件
         if (numPages > MinPages)
@@ -219,8 +233,15 @@ AddrSpace::AddrSpace(OpenFile *executable)
             // 读内存
             executable->ReadAt(&(machine->mainMemory[data_phy_addr]), PageSize, noffH.initData.inFileAddr + i * PageSize);
             pageTable[i].valid = TRUE;
+            for (int vpc = 0; vpc < MaxPages; vpc++)
+                if (vpTable[vpc] == -1)
+                {
+                    vpTable[vpc] = i;
+                    printf("AddrSpace: Successfully Load Data Page # %d.\n", i);
+                    break;
+                }
         }
-        count += DataPages;
+        count += data_end - data_start;
         // 交换文件
         if (numPages > MinPages)
         {
@@ -314,7 +335,7 @@ void AddrSpace::RestoreState()
 
 void AddrSpace::Print()
 {
-    printf("Page table dump: %d pages in total\n", 5);
+    printf("Page table dump: %d pages in total\n", count);
     printf("=================================================\n");
     printf("\tvPage\tpPage\tValid\t Use\tDirty\n");
     for (int i = 0; i < numPages; i++)
