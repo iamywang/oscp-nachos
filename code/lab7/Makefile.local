@@ -15,7 +15,7 @@ CCFILES += addrspace.cc\
 	mipssim.cc\
 	translate.cc
 
-INCPATH += -I- -I../lab7 -I../bin -I../userprog -I../filesys
+INCPATH += -I../bin -I../lab7 -I../filesys
 
 ifdef MAKEFILE_FILESYS_LOCAL
 DEFINES += -DVM
