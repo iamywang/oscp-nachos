@@ -39,12 +39,12 @@ extern BitMap *bitmap;
 #ifdef FILESYS_NEEDED // FILESYS or FILESYS_STUB
 #include "filesys.h"
 extern FileSystem *fileSystem;
+extern bool ThreadMap[128];
 #endif
 
 #ifdef FILESYS
 #include "synchdisk.h"
 extern SynchDisk *synchDisk;
-extern bool ThreadMap[128];
 #endif
 
 #ifdef NETWORK
@@ -53,7 +53,7 @@ extern PostOffice *postOffice;
 #endif
 
 #ifdef VM
-extern unsigned int vpTable[MaxPages];
+extern unsigned int vpTable[32];
 #endif
 
 #endif // SYSTEM_H

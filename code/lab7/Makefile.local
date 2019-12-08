@@ -3,6 +3,11 @@ define MAKEFILE_VM_LOCAL
 yes
 endef
 
+ifndef MAKEFILE_USERPROG_LOCAL
+define MAKEFILE_USERPROG_LOCAL
+yes
+endef
+
 # The default VM doesn't add any new source files.
 # As always, you should add new source files here.
 
@@ -18,9 +23,11 @@ CCFILES += addrspace.cc\
 INCPATH += -I../bin -I../lab7 -I../filesys
 
 ifdef MAKEFILE_FILESYS_LOCAL
-DEFINES += -DVM
+DEFINES += -DUSER_PROGRAM -DVM
 else
-DEFINES += -DVM -DFILESYS_NEEDED -DFILESYS_STUB
+DEFINES += -DUSER_PROGRAM -DVM -DFILESYS_NEEDED -DFILESYS_STUB
 endif
+
+endif # MAKEFILE_USERPROG_LOCAL
 
 endif # MAKEFILE_VM_LOCAL

@@ -207,7 +207,7 @@ void AddrSpace::RestoreState()
 
 void AddrSpace::Print()
 {
-    printf("Page table dump: %d pages in total\n", 5);
+    printf("Page table dump: %d pages in total\n", numPages);
     printf("=================================================\n");
     printf("\tvPage\tpPage\tValid\t Use\tDirty\n");
     for (int i = 0; i < numPages; i++)

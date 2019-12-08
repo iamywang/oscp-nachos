@@ -21,11 +21,11 @@ Timer *timer;                // the hardware timer device,
 
 #ifdef FILESYS_NEEDED
 FileSystem *fileSystem;
+bool ThreadMap[128];
 #endif
 
 #ifdef FILESYS
 SynchDisk *synchDisk;
-bool ThreadMap[128];
 #endif
 
 #ifdef USER_PROGRAM // requires either FILESYS or FILESYS_STUB
@@ -38,7 +38,7 @@ PostOffice *postOffice;
 #endif
 
 #ifdef VM
-unsigned int vpTable[MaxPages];
+unsigned int vpTable[32];
 #endif
 
 // External definition, to allow us to take a pointer to this function
@@ -97,7 +97,7 @@ void Initialize(int argc, char **argv)
     int netname = 0;  // UNIX socket name
 #endif
 #ifdef VM
-    for (int i = 0; i < MaxPages; i++)
+    for (int i = 0; i < 32; i++)
         vpTable[i] = -1;
 #endif
 

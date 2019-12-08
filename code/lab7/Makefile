@@ -17,6 +17,11 @@ define MAKEFILE_VM
 yes
 endef
 
+ifndef MAKEFILE_USERPROG
+define MAKEFILE_USERPROG
+yes
+endef
+
 # If the filesystem assignment is done before userprog, then
 # uncomment the include below
 
@@ -27,5 +32,7 @@ include ../lab7/Makefile.local
 
 include ../Makefile.dep
 include ../Makefile.common
+
+endif # MAKEFILE_USERPROG
 
 endif # MAKEFILE_VM
