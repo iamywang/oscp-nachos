@@ -38,7 +38,7 @@ PostOffice *postOffice;
 #endif
 
 #ifdef VM
-unsigned int vpTable[32];
+unsigned int vpTable[MaxPages];
 #endif
 
 // External definition, to allow us to take a pointer to this function
@@ -97,7 +97,7 @@ void Initialize(int argc, char **argv)
     int netname = 0;  // UNIX socket name
 #endif
 #ifdef VM
-    for (int i = 0; i < 32; i++)
+    for (int i = 0; i < MaxPages; i++)
         vpTable[i] = -1;
 #endif
 

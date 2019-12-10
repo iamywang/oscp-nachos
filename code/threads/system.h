@@ -53,7 +53,8 @@ extern PostOffice *postOffice;
 #endif
 
 #ifdef VM
-extern unsigned int vpTable[32];
+#include "addrspace.h"
+extern unsigned int vpTable[MaxPages];
 #endif
 
 #endif // SYSTEM_H

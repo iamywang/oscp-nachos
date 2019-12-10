@@ -18,10 +18,10 @@
 #include "bitmap.h"
 
 #define UserStackSize 1024 // 用户栈大小
-#define MaxPages 32        // 可装入内存最大页数
-#define MinPages 16        // 可装入内存最小页数
-#define CodePages 8        // 代码区最大页数
-#define DataPages 24       // 数据区最大页数
+#define MaxPages 16        // 可装入内存最大页数
+#define MinPages 4         // 可装入内存最小页数
+#define CodePages 4        // 代码区最大页数
+#define DataPages 12       // 数据区最大页数
 
 class AddrSpace
 {
