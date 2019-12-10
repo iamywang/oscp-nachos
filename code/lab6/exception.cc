@@ -87,7 +87,7 @@ void ExceptionHandler(ExceptionType which)
         {
         case SC_Halt:
         {
-            // DEBUG('a', "Shutdown, initiated by user program.\n");
+            DEBUG('a', "Shutdown, initiated by user program.\n");
             interrupt->Halt();
             break;
         }
@@ -100,7 +100,7 @@ void ExceptionHandler(ExceptionType which)
             int i = 0;
             do
             {
-                machine->ReadMem(addr + i, 1, (int *)&filename[i]); //read filename from mainMemory
+                machine->ReadMem(addr + i, 1, (int *)&filename[i]);
             } while (filename[i++] != '\0');
 
             printf("Exec(%s):\n", filename);
@@ -135,6 +135,12 @@ void ExceptionHandler(ExceptionType which)
         case SC_Exit:
         {
             printf("Execute system call of Exit()\n");
+
+            int exitAddr = machine->ReadRegister(4);
+            int *exitStatus;
+            machine->ReadMem(exitAddr, 4, exitStatus);
+            exitStatus = &exitAddr;
+            printf("Exit with %d!\n", *exitStatus);
 
             //machine->clear();
             AdvancePC();

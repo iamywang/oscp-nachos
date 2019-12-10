@@ -58,6 +58,52 @@ void AdvancePC()
 }
 
 //----------------------------------------------------------------------
+// PageReplace
+// 页面置换算法
+//----------------------------------------------------------------------
+enum PageReplaceType
+{
+    RANDOM,
+    FIFO,
+    LIFO,
+    LRU
+};
+
+unsigned int PageReplace(PageReplaceType type)
+{
+    unsigned int readySwap;
+    extern unsigned int vpTable[MaxPages];
+
+    switch (type)
+    {
+    case RANDOM:
+        srand((unsigned)time(NULL));
+        readySwap = rand() % MaxPages;
+        while (!pageSpace->pageTable[readySwap].valid)
+            readySwap = rand() % MaxPages;
+        break;
+    case FIFO:
+        int count = 0;
+        readySwap = vpTable[0];
+        while (vpTable[count] != -1)
+            count++;
+        for (int i = 0; i < count; i++)
+            vpTable[i] = vpTable[i + 1];
+        vpTable[count - 1] = -1;
+        break;
+    case LIFO:
+        int count = 0;
+        while (vpTable[count] != -1)
+            count++;
+        readySwap = count - 1;
+        break;
+    case LRU:
+        break;
+    }
+    return readySwap;
+}
+
+//----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
 //	is executing, and either does a syscall, or generates an addressing
@@ -92,7 +138,7 @@ void ExceptionHandler(ExceptionType which)
         {
         case SC_Halt:
         {
-            // DEBUG('a', "Shutdown, initiated by user program.\n");
+            DEBUG('a', "Shutdown, initiated by user program.\n");
             interrupt->Halt();
             break;
         }
@@ -105,7 +151,7 @@ void ExceptionHandler(ExceptionType which)
             int i = 0;
             do
             {
-                machine->ReadMem(addr + i, 1, (int *)&filename[i]); //read filename from mainMemory
+                machine->ReadMem(addr + i, 1, (int *)&filename[i]);
             } while (filename[i++] != '\0');
 
             printf("Exec(%s):\n", filename);
@@ -145,7 +191,7 @@ void ExceptionHandler(ExceptionType which)
             int *exitStatus;
             machine->ReadMem(exitAddr, 4, exitStatus);
             exitStatus = &exitAddr;
-            printf("Exit with !%d\n", *exitStatus);
+            printf("Exit with %d!\n", *exitStatus);
 
             AdvancePC();
             currentThread->Finish();
@@ -187,12 +233,7 @@ void ExceptionHandler(ExceptionType which)
         // 需要使用页面置换算法
         else
         {
-            // 选取要被换出的页RANDOM选取
-            srand((unsigned)time(NULL));
-            unsigned int readySwap = rand() % MaxPages; // 0 ~ MaxPages
-            while (!pageSpace->pageTable[readySwap].valid)
-                readySwap = rand() % MaxPages;
-
+            unsigned int readySwap = PageReplace(RANDOM);
             // 是否被修改
             if (pageSpace->pageTable[readySwap].dirty == TRUE)
             {
