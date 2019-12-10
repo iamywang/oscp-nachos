@@ -74,15 +74,15 @@ unsigned int PageReplace(PageReplaceType type)
     unsigned int readySwap;
     extern unsigned int vpTable[MaxPages];
 
-    switch (type)
+    if (type == RANDOM)
     {
-    case RANDOM:
         srand((unsigned)time(NULL));
         readySwap = rand() % MaxPages;
-        while (!pageSpace->pageTable[readySwap].valid)
+        while (!currentThread->space->pageTable[readySwap].valid)
             readySwap = rand() % MaxPages;
-        break;
-    case FIFO:
+    }
+    else if (type == FIFO)
+    {
         int count = 0;
         readySwap = vpTable[0];
         while (vpTable[count] != -1)
@@ -90,15 +90,16 @@ unsigned int PageReplace(PageReplaceType type)
         for (int i = 0; i < count; i++)
             vpTable[i] = vpTable[i + 1];
         vpTable[count - 1] = -1;
-        break;
-    case LIFO:
+    }
+    else if (type == LIFO)
+    {
         int count = 0;
         while (vpTable[count] != -1)
             count++;
         readySwap = count - 1;
-        break;
-    case LRU:
-        break;
+    }
+    else if (type == LRU)
+    {
     }
     return readySwap;
 }
