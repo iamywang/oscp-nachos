@@ -26,7 +26,7 @@ endef
 # uncomment the include below
 
 include ../threads/Makefile.local
-include ../lab4/Makefile.local
+include ../lab4/Makefile_lab7.local
 include ../lab7/Makefile.local
 # include ../vm/Makefile.local
 
