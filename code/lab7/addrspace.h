@@ -42,11 +42,11 @@ public:
   unsigned int count; // 计数器
   char *vmName;       // 交换文件文件名
 
-  TranslationEntry *pageTable;
+  unsigned int numPages;       // 虚拟页个数
+  TranslationEntry *pageTable; // 页表
 
 private:
-  unsigned int numPages; // Number of pages in the virtual address space
-  int spaceID;           // Current Space ID
+  int spaceID; // Current Space ID
 };
 
 #endif // ADDRSPACE_H

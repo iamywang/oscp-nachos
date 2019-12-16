@@ -64,9 +64,11 @@ void AdvancePC()
 enum PageReplaceType
 {
     RANDOM,
-    FIFO,
-    LIFO,
-    LRU
+    FIFO,           // 先入先出
+    LIFO,           // 后入先出
+    LRU,            // 最近最少使用
+    CLOCK,          // 时钟
+    ENHANCED_CLOCK, // 二次机会
 };
 
 unsigned int PageReplace(PageReplaceType type)
@@ -77,16 +79,19 @@ unsigned int PageReplace(PageReplaceType type)
     if (type == RANDOM)
     {
         srand((unsigned)time(NULL));
-        readySwap = rand() % MaxPages;
+        readySwap = rand() % currentThread->space->numPages;
         while (!currentThread->space->pageTable[readySwap].valid)
-            readySwap = rand() % MaxPages;
+            readySwap = rand() % currentThread->space->numPages;
     }
     else if (type == FIFO)
     {
         int count = 0;
         readySwap = vpTable[0];
+        // 找到第一个不为-1的页面
         while (vpTable[count] != -1)
             count++;
+        readySwap = vpTable[count - 1];
+        // 移动页面
         for (int i = 0; i < count; i++)
             vpTable[i] = vpTable[i + 1];
         vpTable[count - 1] = -1;
@@ -96,10 +101,53 @@ unsigned int PageReplace(PageReplaceType type)
         int count = 0;
         while (vpTable[count] != -1)
             count++;
-        readySwap = count - 1;
+        readySwap = vpTable[count - 1];
+        vpTable[count - 1] = -1;
     }
     else if (type == LRU)
     {
+    }
+    else if (type == CLOCK)
+    {
+        int count = 0;
+        readySwap = vpTable[0];
+        // 找到第一个不为-1的页面，访问位是0
+        for (count = 0; count < MaxPages; count++)
+        {
+            if (vpTable[count] != -1)
+                if (currentThread->space->pageTable[readySwap].use == TRUE)
+                    currentThread->space->pageTable[readySwap].use == FALSE;
+                else
+                {
+                    readySwap = vpTable[count - 1];
+                    break;
+                }
+        }
+        // 移动页面
+        for (int i = 0; i < count; i++)
+            vpTable[i] = vpTable[i + 1];
+        vpTable[count - 1] = -1;
+    }
+    else if (type == ENHANCED_CLOCK)
+    {
+        int count = 0;
+        readySwap = vpTable[0];
+        // 找到第一个不为-1的页面，访问位 dirty位都是0
+        for (count = 0; count < MaxPages; count++)
+        {
+            if (vpTable[count] != -1)
+                if (currentThread->space->pageTable[readySwap].use == TRUE)
+                    currentThread->space->pageTable[readySwap].use == FALSE;
+                else if (currentThread->space->pageTable[readySwap].dirty == FALSE)
+                {
+                    readySwap = vpTable[count - 1];
+                    break;
+                }
+        }
+        // 移动页面
+        for (int i = 0; i < count; i++)
+            vpTable[i] = vpTable[i + 1];
+        vpTable[count - 1] = -1;
     }
     return readySwap;
 }
@@ -228,7 +276,7 @@ void ExceptionHandler(ExceptionType which)
         // 需要使用页面置换算法
         else
         {
-            unsigned int readySwap = PageReplace(RANDOM);
+            unsigned int readySwap = PageReplace(FIFO);
             // 是否被修改
             if (pageSpace->pageTable[readySwap].dirty == TRUE)
             {
